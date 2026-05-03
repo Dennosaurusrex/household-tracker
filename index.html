@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#fafafa">
+<title>Household</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --ink: #111111;
+    --ink-2: #555555;
+    --muted: #999999;
+    --line: #e8e8e8;
+    --line-strong: #d4d4d4;
+    --accent: #2563eb;
+    --accent-soft: #eff6ff;
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { padding: 0 0 80px 0; }
+  button { font-family: inherit; }
+
+  /* === HEADER === */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header-info { min-width: 0; flex: 1; }
+  .header-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 1px;
+  }
+  .header-household {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .user-badge {
+    font-size: 13px;
+    color: var(--ink-2);
+    font-weight: 500;
+    flex-shrink: 0;
+    margin-left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .user-badge .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--success);
+    border-radius: 50%;
+  }
+  .user-badge .admin-tag {
+    font-size: 9px;
+    background: var(--ink);
+    color: white;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+  }
+
+  /* === SCREENS === */
+  .screen { display: none; padding: 24px 20px; }
+  .screen.active { display: block; }
+
+  .screen-title {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .screen-subtitle {
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+
+  /* === ACTIVITY GRID === */
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .activity-btn {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .activity-btn:active { transform: scale(0.97); border-color: var(--ink); }
+  .activity-btn.flash { background: var(--accent-soft); border-color: var(--accent); }
+  .activity-btn .emoji { font-size: 22px; margin-bottom: 8px; }
+  .activity-btn .name { font-weight: 500; font-size: 14px; line-height: 1.3; color: var(--ink); }
+  .activity-btn .points { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 500; }
+
+  /* === BOTTOM NAV === */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    display: flex;
+    padding: 0 0 env(safe-area-inset-bottom, 0) 0;
+    z-index: 50;
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    flex: 1;
+    padding: 10px 4px;
+    cursor: pointer;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .nav-btn .icon { font-size: 20px; line-height: 1; }
+  .nav-btn.active { color: var(--ink); }
+
+  /* === MICRO TOAST === */
+  .micro-toast {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--ink);
+    color: white;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    transform: translateY(-100%);
+    transition: transform 0.25s ease;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .micro-toast.show { transform: translateY(0); }
+
+  /* === ENTRY LIST === */
+  .entry-item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .entry-info { flex: 1; min-width: 0; }
+  .entry-name { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+  .entry-meta { font-size: 12px; color: var(--muted); }
+  .entry-points { font-size: 13px; color: var(--ink-2); font-weight: 500; flex-shrink: 0; }
+  .entry-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--ink-2);
+    touch-action: manipulation;
+    transition: all 0.15s;
+  }
+  .icon-btn:active { background: var(--bg); }
+  .icon-btn.danger { color: var(--danger); }
+  .icon-btn.danger:active { background: #fef2f2; }
+
+  /* === STATS === */
+  .period-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .period-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--muted);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .period-tab.active { background: var(--ink); color: white; }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+  .stat-card h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .leaderboard-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .leaderboard-row:first-child { padding-top: 0; }
+  .rank { font-size: 13px; font-weight: 600; color: var(--muted); width: 22px; }
+  .leaderboard-row.first .rank { color: var(--ink); }
+  .player-name { flex: 1; font-weight: 500; font-size: 15px; }
+  .player-points { font-weight: 600; font-size: 15px; color: var(--ink); }
+  .player-points::after { content: ' pts'; font-weight: 400; color: var(--muted); font-size: 13px; }
+
+  .top-activity {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .top-activity:last-child { border-bottom: none; padding-bottom: 0; }
+  .top-activity:first-child { padding-top: 0; }
+  .top-activity-name { font-size: 14px; }
+  .top-activity-count { color: var(--muted); font-size: 13px; }
+
+  /* === FORM === */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .form-help {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .form-input:focus, .form-select:focus { outline: none; border-color: var(--ink); }
+
+  .btn {
+    background: var(--ink);
+    color: white;
+    border: 1px solid var(--ink);
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 15px;
+    width: 100%;
+    transition: opacity 0.15s;
+    touch-action: manipulation;
+  }
+  .btn:active { opacity: 0.85; }
+  .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+  .btn-danger { background: var(--surface); color: var(--danger); border-color: var(--line-strong); }
+
+  /* === CUSTOMIZING === */
+  .custom-section {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .custom-section h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .custom-section h2 .badge {
+    font-size: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+  }
+  .custom-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .custom-list-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .custom-list-item:first-child { padding-top: 0; }
+  .custom-list-item input[type="text"] {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    background: var(--bg);
+    min-width: 0;
+    color: var(--ink);
+  }
+  .custom-list-item input[type="text"]:focus { outline: none; border-color: var(--ink); background: var(--surface); }
+  .custom-list-item input[type="number"] {
+    width: 56px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    background: var(--bg);
+    text-align: center;
+    color: var(--ink);
+  }
+  .custom-list-item input[type="number"]:focus { outline: none; border-color: var(--ink); background: var(--surface); }
+  .custom-list-item input[type="text"].emoji-input {
+    flex: 0 0 44px;
+    text-align: center;
+    font-size: 16px;
+    padding: 8px 4px;
+  }
+  .add-row-btn {
+    background: transparent;
+    color: var(--ink-2);
+    border: 1px dashed var(--line-strong);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    margin-top: 10px;
+    width: 100%;
+    touch-action: manipulation;
+  }
+  .add-row-btn:active { background: var(--bg); }
+
+  /* === MEMBER LIST === */
+  .member-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .member-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .member-item:first-child { padding-top: 0; }
+  .member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-weight: 500; font-size: 14px; }
+  .member-role { font-size: 12px; color: var(--muted); }
+  .member-role .you-tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .member-role .admin-role-tag {
+    display: inline-block;
+    background: var(--ink);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-left: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  /* === INVITE BOX === */
+  .invite-box {
+    background: var(--accent-soft);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .invite-box h4 {
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .invite-code {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--surface);
+    padding: 10px 14px;
+    border-radius: 8px;
+    text-align: center;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    user-select: all;
+  }
+  .invite-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .invite-actions .btn { padding: 10px; font-size: 13px; }
+  .invite-url {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--ink-2);
+    background: var(--surface);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    word-break: break-all;
+    user-select: all;
+  }
+
+  /* === MODAL === */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 22px;
+    max-width: 400px;
+    width: 100%;
+  }
+  .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .modal p { margin-bottom: 8px; color: var(--ink-2); font-size: 14px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-actions .btn { flex: 1; }
+
+  /* === EMPTY STATE === */
+  .empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+  .empty .emoji { font-size: 32px; margin-bottom: 10px; opacity: 0.5; }
+  .empty p { font-size: 14px; }
+
+  /* === SETUP === */
+  .setup-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px;
+    text-align: center;
+  }
+  .setup-screen.hidden { display: none; }
+  .setup-logo { font-size: 40px; margin-bottom: 14px; }
+  .setup-screen h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .setup-screen p {
+    color: var(--muted);
+    margin-bottom: 28px;
+    font-size: 14px;
+    max-width: 320px;
+  }
+  .setup-screen .form-group { width: 100%; max-width: 320px; }
+
+  .setup-choice {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 16px;
+  }
+  .choice-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .choice-card:active { transform: scale(0.98); }
+  .choice-card.selected { border-color: var(--ink); background: var(--accent-soft); }
+  .choice-card-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .choice-card-sub {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .back-link {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    text-decoration: underline;
+  }
+
+  /* === DATA ACTIONS === */
+  .data-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .data-actions .btn { padding: 10px; font-size: 13px; }
+
+  .crown { font-size: 14px; margin-left: 4px; opacity: 0.7; }
+
+  .info-banner {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    color: #92400e;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SETUP: WELCOME ===== -->
+<div class="setup-screen" id="screen-welcome">
+  <div class="setup-logo">🏠</div>
+  <h1>Household</h1>
+  <p>Track who does what at home. Make it visible. Make it fun.</p>
+  <div class="setup-choice">
+    <button class="choice-card" id="choiceCreate">
+      <div class="choice-card-title">Create new household</div>
+      <div class="choice-card-sub">You'll be the admin and can invite others</div>
+    </button>
+    <button class="choice-card" id="choiceJoin">
+      <div class="choice-card-title">Join existing household</div>
+      <div class="choice-card-sub">Use an invite code from a family member</div>
+    </button>
+  </div>
+</div>
+
+<!-- ===== SETUP: CREATE HOUSEHOLD ===== -->
+<div class="setup-screen hidden" id="screen-create">
+  <div class="setup-logo">🏡</div>
+  <h1>New household</h1>
+  <p>Set up your family's space.</p>
+  <div class="form-group" style="width:100%; max-width:320px;">
+    <label class="form-label">Household name</label>
+    <input type="text" class="form-input" id="createHouseholdName" placeholder="The Smith Family" autocomplete="off">
+  </div>
+  <div class="form-group" style="width:100%; max-width:320px;">
+    <label class="form-label">Your name</label>
+    <input type="text" class="form-input" id="createUserName" placeholder="Your name" autocomplete="off">
+    <div class="form-help">You'll be the admin of this household.</div>
+  </div>
+  <div class="form-group" style="width:100%; max-width:320px;">
+    <button class="btn" id="createSubmit">Create household</button>
+  </div>
+  <button class="back-link" id="createBack">← Back</button>
+</div>
+
+<!-- ===== SETUP: JOIN HOUSEHOLD ===== -->
+<div class="setup-screen hidden" id="screen-join">
+  <div class="setup-logo">🔑</div>
+  <h1>Join household</h1>
+  <p>Enter the invite code your family shared with you.</p>
+  <div class="form-group" style="width:100%; max-width:320px;">
+    <label class="form-label">Invite code</label>
+    <input type="text" class="form-input" id="joinCode" placeholder="HH-XXXX-XXXX" autocomplete="off" style="text-align:center; letter-spacing:2px; font-family:'SF Mono',Menlo,Consolas,monospace; text-transform:uppercase;">
+    <div class="form-help">Looks like: HH-A4F2-K9X1</div>
+  </div>
+  <div class="form-group" style="width:100%; max-width:320px;">
+    <label class="form-label">Your name</label>
+    <input type="text" class="form-input" id="joinUserName" placeholder="Your name" autocomplete="off">
+  </div>
+  <div class="form-group" style="width:100%; max-width:320px;">
+    <button class="btn" id="joinSubmit">Join</button>
+  </div>
+  <button class="back-link" id="joinBack">← Back</button>
+
+  <div class="info-banner" style="max-width:320px; margin-top:16px;">
+    <strong>Local mode:</strong> Real invite codes work after Supabase setup. For now you can simulate joining a friend's household.
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" style="display:none;">
+  <header class="header">
+    <div class="header-info">
+      <div class="header-title">Household</div>
+      <div class="header-household" id="headerHousehold">—</div>
+    </div>
+    <div class="user-badge" id="userBadge">
+      <span class="dot"></span>
+      <span id="userName">—</span>
+      <span class="admin-tag" id="adminTag" style="display:none;">Admin</span>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <section class="screen active" id="screen-home">
+    <h2 class="screen-title">What did you do?</h2>
+    <p class="screen-subtitle">Tap to log an activity.</p>
+    <div class="activity-grid" id="activityGrid"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="screen" id="screen-correct">
+    <h2 class="screen-title">History</h2>
+    <p class="screen-subtitle">Edit or delete your entries.</p>
+    <div id="entryList"></div>
+  </section>
+
+  <!-- STATS -->
+  <section class="screen" id="screen-stats">
+    <h2 class="screen-title">Score</h2>
+    <p class="screen-subtitle">Who kept the household running?</p>
+    <div class="period-tabs">
+      <button class="period-tab active" data-period="week">Week</button>
+      <button class="period-tab" data-period="2weeks">2W</button>
+      <button class="period-tab" data-period="month">Month</button>
+      <button class="period-tab" data-period="year">Year</button>
+      <button class="period-tab" data-period="all">All</button>
+    </div>
+    <div class="stat-card">
+      <h3>Leaderboard</h3>
+      <div id="leaderboard"></div>
+    </div>
+    <div class="stat-card">
+      <h3>Top activities</h3>
+      <div id="topActivities"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="screen" id="screen-custom">
+    <h2 class="screen-title">Settings</h2>
+    <p class="screen-subtitle">Manage your household.</p>
+
+    <!-- Members section -->
+    <div class="custom-section">
+      <h2>
+        Members
+        <span class="badge" id="memberCountBadge">0</span>
+      </h2>
+      <div id="memberList"></div>
+      <div id="inviteBox"></div>
+    </div>
+
+    <!-- Activities section -->
+    <div class="custom-section">
+      <h2>Activities</h2>
+      <div id="activityCustomList"></div>
+      <button class="add-row-btn" id="addActivityBtn">+ Add activity</button>
+    </div>
+
+    <!-- Household settings -->
+    <div class="custom-section">
+      <h2>Household</h2>
+      <div class="form-group" style="margin-bottom: 8px;">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-input" id="householdNameInput">
+        <div class="form-help" id="householdNameHelp">Only admins can rename.</div>
+      </div>
+    </div>
+
+    <!-- Data section -->
+    <div class="custom-section">
+      <h2>Data</h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+        Export or import all data as TXT (tab-separated).
+      </p>
+      <div class="data-actions">
+        <button class="btn btn-secondary" id="exportBtn">Export</button>
+        <button class="btn btn-secondary" id="importBtnVisible">Import</button>
+      </div>
+      <input type="file" id="importFile" style="display:none" accept=".txt,.tsv">
+      <div style="margin-top: 10px;">
+        <button class="btn btn-danger" id="leaveHouseholdBtn">Leave household</button>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <button class="btn" id="saveCustomBtn">Save changes</button>
+    </div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="home"><span class="icon">⊕</span><span>Log</span></button>
+    <button class="nav-btn" data-screen="correct"><span class="icon">≡</span><span>History</span></button>
+    <button class="nav-btn" data-screen="stats"><span class="icon">◔</span><span>Score</span></button>
+    <button class="nav-btn" data-screen="custom"><span class="icon">⚙</span><span>Settings</span></button>
+  </nav>
+</div>
+
+<!-- MICRO TOAST -->
+<div class="micro-toast" id="microToast">Logged</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>Edit entry</h2>
+    <div class="form-group">
+      <label class="form-label">Activity</label>
+      <select class="form-select" id="editActivity"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+      <button class="btn" id="editSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h2 id="confirmTitle">Are you sure?</h2>
+    <p id="confirmMessage">This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="confirmCancelBtn">Cancel</button>
+      <button class="btn" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT MODAL -->
+<div class="modal-overlay" id="alertModal">
+  <div class="modal">
+    <h2 id="alertTitle">Notice</h2>
+    <p id="alertMessage"></p>
+    <div class="modal-actions">
+      <button class="btn" id="alertOkBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// =====================================================
+// DEFAULT DATA
+// =====================================================
+const DEFAULT_ACTIVITIES = [
+  { name: 'Empty dishwasher', points: 2, emoji: '🍽️' },
+  { name: 'Load dishwasher', points: 2, emoji: '🧽' },
+  { name: 'Take out trash', points: 2, emoji: '🗑️' },
+  { name: 'Mop floors', points: 3, emoji: '🧹' },
+  { name: 'Clean bathroom', points: 4, emoji: '🛁' },
+  { name: 'Clean toilet', points: 3, emoji: '🚽' },
+  { name: 'Do laundry', points: 2, emoji: '👕' },
+  { name: 'Hang up laundry', points: 2, emoji: '🧺' },
+  { name: 'Fold laundry', points: 2, emoji: '👚' },
+  { name: 'Grocery shopping', points: 3, emoji: '🛒' },
+  { name: 'Cook a meal', points: 3, emoji: '🍳' },
+  { name: 'Set/clear table', points: 1, emoji: '🍴' },
+  { name: 'Bring kid to school', points: 1, emoji: '🎒' },
+  { name: 'Vacuum', points: 2, emoji: '🌀' },
+  { name: 'Tidy bedroom', points: 2, emoji: '🛏️' },
+  { name: 'Clean kitchen', points: 3, emoji: '🧼' },
+];
+
+// =====================================================
+// STORAGE
+// =====================================================
+// Single storage key holds entire household state. This makes
+// Supabase migration trivial later — one row in the DB matches one object.
+const STORAGE_KEY = 'household_state_v2';
+const USER_KEY = 'household_current_user_id_v2';
+
+// =====================================================
+// STATE
+// =====================================================
+// The "household" object will later live in Supabase.
+// Structure mirrors what the database tables will hold.
+let state = {
+  household: null,    // { id, name, inviteCode, adminUserId, createdAt }
+  members: [],        // [{ userId, name, joinedAt, isAdmin }]
+  activities: [],     // [{ name, points, emoji }]
+  entries: [],        // [{ id, timestamp, userId, userName, activity, points }]
+  currentUserId: null,
+  currentPeriod: 'week',
+  editingEntryId: null,
+};
+
+// =====================================================
+// HELPERS
+// =====================================================
+function uid(prefix = '') {
+  return prefix + Math.random().toString(36).slice(2, 10);
+}
+
+function generateInviteCode() {
+  // HH-XXXX-XXXX format, easy to type
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
+  const part = (n) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return `HH-${part(4)}-${part(4)}`;
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  const today = new Date();
+  const diff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  if (diff === 0) return `Today, ${time}`;
+  if (diff === 1) return `Yesterday, ${time}`;
+  if (diff < 7) return `${diff} days ago, ${time}`;
+  return d.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ', ' + time;
+}
+
+function getCurrentMember() {
+  return state.members.find(m => m.userId === state.currentUserId);
+}
+
+function isCurrentUserAdmin() {
+  const m = getCurrentMember();
+  return m && m.isAdmin;
+}
+
+function getMemberById(userId) {
+  return state.members.find(m => m.userId === userId);
+}
+
+// =====================================================
+// PERSISTENCE
+// =====================================================
+function loadData() {
+  state.currentUserId = localStorage.getItem(USER_KEY);
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && saved.household) {
+      state.household = saved.household;
+      state.members = saved.members || [];
+      state.activities = saved.activities || [];
+      state.entries = saved.entries || [];
+    }
+  } catch {
+    // corrupt data — start fresh
+  }
+}
+
+function saveData() {
+  const payload = {
+    household: state.household,
+    members: state.members,
+    activities: state.activities,
+    entries: state.entries,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  if (state.currentUserId) localStorage.setItem(USER_KEY, state.currentUserId);
+}
+
+// =====================================================
+// MODAL HELPERS
+// =====================================================
+function showAlert(message, title = 'Notice') {
+  return new Promise(resolve => {
+    document.getElementById('alertTitle').textContent = title;
+    document.getElementById('alertMessage').textContent = message;
+    const modal = document.getElementById('alertModal');
+    modal.classList.add('show');
+    const btn = document.getElementById('alertOkBtn');
+    const handler = () => { modal.classList.remove('show'); btn.removeEventListener('click', handler); resolve(); };
+    btn.addEventListener('click', handler);
+  });
+}
+
+function showConfirm(message, title = 'Are you sure?') {
+  return new Promise(resolve => {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    const modal = document.getElementById('confirmModal');
+    modal.classList.add('show');
+    const ok = document.getElementById('confirmOkBtn');
+    const cancel = document.getElementById('confirmCancelBtn');
+    const cleanup = (r) => {
+      modal.classList.remove('show');
+      ok.removeEventListener('click', okH);
+      cancel.removeEventListener('click', cancelH);
+      resolve(r);
+    };
+    const okH = () => cleanup(true);
+    const cancelH = () => cleanup(false);
+    ok.addEventListener('click', okH);
+    cancel.addEventListener('click', cancelH);
+  });
+}
+
+function showMicroToast(message) {
+  const toast = document.getElementById('microToast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 1200);
+}
+
+// =====================================================
+// SETUP / WELCOME FLOW
+// =====================================================
+function showSetupScreen(name) {
+  ['welcome', 'create', 'join'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (s === name) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  });
+  document.getElementById('app').style.display = 'none';
+}
+
+function setupWelcomeHandlers() {
+  document.getElementById('choiceCreate').addEventListener('click', () => showSetupScreen('create'));
+  document.getElementById('choiceJoin').addEventListener('click', () => showSetupScreen('join'));
+  document.getElementById('createBack').addEventListener('click', () => showSetupScreen('welcome'));
+  document.getElementById('joinBack').addEventListener('click', () => showSetupScreen('welcome'));
+  document.getElementById('createSubmit').addEventListener('click', handleCreateHousehold);
+  document.getElementById('joinSubmit').addEventListener('click', handleJoinHousehold);
+
+  // Pre-fill invite code from URL if present (?join=HH-XXXX-XXXX)
+  const urlParams = new URLSearchParams(window.location.search);
+  const joinCode = urlParams.get('join');
+  if (joinCode) {
+    document.getElementById('joinCode').value = joinCode;
+    showSetupScreen('join');
+  }
+}
+
+async function handleCreateHousehold() {
+  const householdName = document.getElementById('createHouseholdName').value.trim();
+  const userName = document.getElementById('createUserName').value.trim();
+  if (!householdName) return showAlert('Please enter a household name.');
+  if (!userName) return showAlert('Please enter your name.');
+
+  const userId = uid('u_');
+  const householdId = uid('h_');
+
+  state.household = {
+    id: householdId,
+    name: householdName,
+    inviteCode: generateInviteCode(),
+    adminUserId: userId,
+    createdAt: new Date().toISOString(),
+  };
+  state.members = [{
+    userId: userId,
+    name: userName,
+    isAdmin: true,
+    joinedAt: new Date().toISOString(),
+  }];
+  state.activities = DEFAULT_ACTIVITIES.slice();
+  state.entries = [];
+  state.currentUserId = userId;
+
+  saveData();
+  initApp();
+  showMicroToast(`Welcome to ${householdName}`);
+}
+
+async function handleJoinHousehold() {
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  const userName = document.getElementById('joinUserName').value.trim();
+  if (!code) return showAlert('Please enter the invite code.');
+  if (!userName) return showAlert('Please enter your name.');
+  if (!/^HH-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+    return showAlert('Code format should be: HH-XXXX-XXXX', 'Invalid code');
+  }
+
+  // LOCAL MODE: We can't really lookup other households without a backend.
+  // We simulate joining by creating a pseudo-household with that code.
+  // Once Supabase is wired, this is replaced with a real lookup.
+  const userId = uid('u_');
+  const householdId = uid('h_');
+
+  state.household = {
+    id: householdId,
+    name: 'Shared household',
+    inviteCode: code,
+    adminUserId: 'u_someone_else', // placeholder — admin is unknown locally
+    createdAt: new Date().toISOString(),
+  };
+  state.members = [
+    { userId: 'u_someone_else', name: 'Admin (placeholder)', isAdmin: true, joinedAt: new Date().toISOString() },
+    { userId: userId, name: userName, isAdmin: false, joinedAt: new Date().toISOString() },
+  ];
+  state.activities = DEFAULT_ACTIVITIES.slice();
+  state.entries = [];
+  state.currentUserId = userId;
+
+  saveData();
+  initApp();
+  await showAlert(
+    'You joined in local-only mode. Real household joining works after Supabase is connected. For now, you can play around with the app.',
+    'Joined (local mode)'
+  );
+}
+
+// =====================================================
+// INIT MAIN APP
+// =====================================================
+function initApp() {
+  ['welcome', 'create', 'join'].forEach(s => {
+    document.getElementById('screen-' + s).classList.add('hidden');
+  });
+  document.getElementById('app').style.display = 'block';
+
+  document.getElementById('headerHousehold').textContent = state.household.name;
+  const me = getCurrentMember();
+  document.getElementById('userName').textContent = me ? me.name : '—';
+  document.getElementById('adminTag').style.display = isCurrentUserAdmin() ? 'inline-block' : 'none';
+
+  renderActivities();
+  setupNavigation();
+  setupPeriodTabs();
+  setupStaticHandlers();
+}
+
+function setupStaticHandlers() {
+  document.getElementById('addActivityBtn').addEventListener('click', addActivityRow);
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+  document.getElementById('importBtnVisible').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', importData);
+  document.getElementById('saveCustomBtn').addEventListener('click', saveCustom);
+  document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+  document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
+  document.getElementById('leaveHouseholdBtn').addEventListener('click', leaveHousehold);
+}
+
+// =====================================================
+// NAVIGATION
+// =====================================================
+function setupNavigation() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.screen;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('screen-' + target).classList.add('active');
+      onScreenEnter(target);
+    });
+  });
+}
+
+function onScreenEnter(screen) {
+  if (screen === 'correct') renderEntries();
+  if (screen === 'stats') renderStats();
+  if (screen === 'custom') renderCustom();
+}
+
+// =====================================================
+// ACTIVITIES (HOME)
+// =====================================================
+function renderActivities() {
+  const grid = document.getElementById('activityGrid');
+  grid.innerHTML = '';
+  state.activities.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'activity-btn';
+    btn.innerHTML = `
+      <div>
+        <div class="emoji">${a.emoji || '·'}</div>
+        <div class="name">${escapeHtml(a.name)}</div>
+      </div>
+      <div class="points">${a.points} ${a.points === 1 ? 'point' : 'points'}</div>
+    `;
+    btn.addEventListener('click', () => recordActivity(i, btn));
+    grid.appendChild(btn);
+  });
+}
+
+function recordActivity(idx, btnEl) {
+  const a = state.activities[idx];
+  const me = getCurrentMember();
+  if (!me) return;
+  const entry = {
+    id: uid('e_'),
+    timestamp: new Date().toISOString(),
+    userId: me.userId,
+    userName: me.name,
+    activity: a.name,
+    points: a.points,
+  };
+  state.entries.push(entry);
+  saveData();
+
+  if (btnEl) {
+    btnEl.classList.add('flash');
+    setTimeout(() => btnEl.classList.remove('flash'), 350);
+  }
+  showMicroToast(`+${a.points} · ${a.name}`);
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
+// =====================================================
+// HISTORY
+// =====================================================
+function renderEntries() {
+  const list = document.getElementById('entryList');
+  const myEntries = state.entries
+    .filter(e => e.userId === state.currentUserId)
+    .slice().reverse().slice(0, 50);
+
+  if (myEntries.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="emoji">·</div><p>No entries yet.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  myEntries.forEach(e => {
+    const item = document.createElement('div');
+    item.className = 'entry-item';
+    item.innerHTML = `
+      <div class="entry-info">
+        <div class="entry-name">${escapeHtml(e.activity)}</div>
+        <div class="entry-meta">${formatDate(e.timestamp)}</div>
+      </div>
+      <div class="entry-points">+${e.points}</div>
+      <div class="entry-actions">
+        <button class="icon-btn" data-action="edit" data-id="${e.id}" aria-label="Edit">✎</button>
+        <button class="icon-btn danger" data-action="delete" data-id="${e.id}" aria-label="Delete">×</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      if (btn.dataset.action === 'edit') openEditModal(btn.dataset.id);
+      else deleteEntry(btn.dataset.id);
+    });
+  });
+}
+
+async function deleteEntry(id) {
+  const ok = await showConfirm('Really delete this entry?', 'Delete entry');
+  if (!ok) return;
+  state.entries = state.entries.filter(e => e.id !== id);
+  saveData();
+  renderEntries();
+}
+
+function openEditModal(id) {
+  state.editingEntryId = id;
+  const select = document.getElementById('editActivity');
+  select.innerHTML = state.activities.map(a =>
+    `<option value="${escapeHtml(a.name)}">${escapeHtml(a.name)} (${a.points} pts)</option>`
+  ).join('');
+  const entry = state.entries.find(e => e.id === id);
+  if (entry) select.value = entry.activity;
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+  state.editingEntryId = null;
+}
+
+function saveEdit() {
+  const newActivity = document.getElementById('editActivity').value;
+  const activity = state.activities.find(a => a.name === newActivity);
+  if (!activity) return;
+  const entry = state.entries.find(e => e.id === state.editingEntryId);
+  if (entry) {
+    entry.activity = activity.name;
+    entry.points = activity.points;
+    saveData();
+    renderEntries();
+  }
+  closeEditModal();
+}
+
+// =====================================================
+// STATS
+// =====================================================
+function setupPeriodTabs() {
+  document.querySelectorAll('.period-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.currentPeriod = tab.dataset.period;
+      renderStats();
+    });
+  });
+}
+
+function getPeriodStart(period) {
+  const d = new Date();
+  switch (period) {
+    case 'week': d.setDate(d.getDate() - 7); break;
+    case '2weeks': d.setDate(d.getDate() - 14); break;
+    case 'month': d.setMonth(d.getMonth() - 1); break;
+    case 'year': d.setFullYear(d.getFullYear() - 1); break;
+    case 'all': return new Date(0);
+  }
+  return d;
+}
+
+function renderStats() {
+  const start = getPeriodStart(state.currentPeriod);
+  const filtered = state.entries.filter(e => new Date(e.timestamp) >= start);
+
+  // Build totals by userId — fall back to userName if user removed
+  const totals = {};
+  filtered.forEach(e => {
+    const member = getMemberById(e.userId);
+    const displayName = member ? member.name : e.userName + ' (removed)';
+    totals[displayName] = (totals[displayName] || 0) + e.points;
+  });
+  // Show all current members, even if 0
+  state.members.forEach(m => { if (!(m.name in totals)) totals[m.name] = 0; });
+
+  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const lb = document.getElementById('leaderboard');
+  if (sorted.length === 0) {
+    lb.innerHTML = '<div class="empty"><p>No data yet.</p></div>';
+  } else {
+    lb.innerHTML = sorted.map(([name, pts], i) => {
+      const firstClass = i === 0 && pts > 0 ? 'first' : '';
+      const crown = i === 0 && pts > 0 ? '<span class="crown">★</span>' : '';
+      return `
+        <div class="leaderboard-row ${firstClass}">
+          <div class="rank">${i + 1}</div>
+          <div class="player-name">${escapeHtml(name)}${crown}</div>
+          <div class="player-points">${pts}</div>
+        </div>`;
+    }).join('');
+  }
+
+  const counts = {};
+  filtered.forEach(e => { counts[e.activity] = (counts[e.activity] || 0) + 1; });
+  const sortedAct = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const ta = document.getElementById('topActivities');
+  if (sortedAct.length === 0) {
+    ta.innerHTML = '<div class="empty"><p>No activities yet.</p></div>';
+  } else {
+    ta.innerHTML = sortedAct.map(([act, count]) => `
+      <div class="top-activity">
+        <span class="top-activity-name">${escapeHtml(act)}</span>
+        <span class="top-activity-count">${count}×</span>
+      </div>`).join('');
+  }
+}
+
+// =====================================================
+// SETTINGS / CUSTOMIZING
+// =====================================================
+function renderCustom() {
+  renderMembers();
+  renderInviteBox();
+
+  // Activities list
+  const ac = document.getElementById('activityCustomList');
+  ac.innerHTML = '';
+  state.activities.forEach((a, i) => {
+    const row = document.createElement('div');
+    row.className = 'custom-list-item';
+    row.innerHTML = `
+      <input type="text" class="emoji-input" value="${escapeHtml(a.emoji || '')}" data-idx="${i}" data-field="emoji" maxlength="2">
+      <input type="text" value="${escapeHtml(a.name)}" data-idx="${i}" data-field="name" placeholder="Activity">
+      <input type="number" value="${a.points}" data-idx="${i}" data-field="points" min="0" max="99">
+      <button class="icon-btn danger" data-remove-activity="${i}" aria-label="Remove">×</button>
+    `;
+    ac.appendChild(row);
+  });
+  ac.querySelectorAll('button[data-remove-activity]').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      removeActivityRow(parseInt(btn.dataset.removeActivity));
+    });
+  });
+
+  // Household name (only editable for admin)
+  const nameInput = document.getElementById('householdNameInput');
+  nameInput.value = state.household.name;
+  nameInput.disabled = !isCurrentUserAdmin();
+  document.getElementById('householdNameHelp').style.display = isCurrentUserAdmin() ? 'none' : 'block';
+}
+
+function renderMembers() {
+  const list = document.getElementById('memberList');
+  document.getElementById('memberCountBadge').textContent = state.members.length;
+  list.innerHTML = '';
+  state.members.forEach((m) => {
+    const isMe = m.userId === state.currentUserId;
+    const initials = m.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+    const meTag = isMe ? '<span class="you-tag">You</span>' : '';
+    const adminTag = m.isAdmin ? '<span class="admin-role-tag">Admin</span>' : '';
+
+    const item = document.createElement('div');
+    item.className = 'member-item';
+
+    let actionBtn = '';
+    // Admin can remove non-admin members. Admin cannot remove themselves directly.
+    if (isCurrentUserAdmin() && !m.isAdmin && !isMe) {
+      actionBtn = `<button class="icon-btn danger" data-remove-member="${m.userId}" aria-label="Remove">×</button>`;
+    }
+
+    item.innerHTML = `
+      <div class="member-avatar">${escapeHtml(initials)}</div>
+      <div class="member-info">
+        <div class="member-name">${escapeHtml(m.name)}</div>
+        <div class="member-role">Joined ${formatDate(m.joinedAt)}${meTag}${adminTag}</div>
+      </div>
+      ${actionBtn}
+    `;
+    list.appendChild(item);
+  });
+
+  list.querySelectorAll('button[data-remove-member]').forEach(btn => {
+    btn.addEventListener('click', () => removeMember(btn.dataset.removeMember));
+  });
+}
+
+function renderInviteBox() {
+  const box = document.getElementById('inviteBox');
+  if (!isCurrentUserAdmin()) {
+    box.innerHTML = '';
+    return;
+  }
+  const code = state.household.inviteCode;
+  // Build invite URL based on current location
+  const baseUrl = window.location.origin + window.location.pathname;
+  const inviteUrl = `${baseUrl}?join=${encodeURIComponent(code)}`;
+
+  box.innerHTML = `
+    <div class="invite-box">
+      <h4>Invite family</h4>
+      <div class="invite-code">${escapeHtml(code)}</div>
+      <div class="invite-actions">
+        <button class="btn" id="copyCodeBtn">Copy code</button>
+        <button class="btn btn-secondary" id="shareInviteBtn">Share link</button>
+      </div>
+      <div class="invite-url">${escapeHtml(inviteUrl)}</div>
+    </div>
+  `;
+
+  document.getElementById('copyCodeBtn').addEventListener('click', () => {
+    copyToClipboard(code);
+    showMicroToast('Code copied');
+  });
+  document.getElementById('shareInviteBtn').addEventListener('click', async () => {
+    const text = `Join our household tracker. Code: ${code}\n\n${inviteUrl}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Join household', text, url: inviteUrl }); } catch {}
+    } else {
+      copyToClipboard(inviteUrl);
+      showMicroToast('Link copied');
+    }
+  });
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch {}
+  document.body.removeChild(ta);
+}
+
+async function removeMember(userId) {
+  const member = getMemberById(userId);
+  if (!member) return;
+  const ok = await showConfirm(
+    `Remove "${member.name}" from the household? Their previous entries will stay in the stats.`,
+    'Remove member'
+  );
+  if (!ok) return;
+  state.members = state.members.filter(m => m.userId !== userId);
+  saveData();
+  renderCustom();
+  showMicroToast(`${member.name} removed`);
+}
+
+async function leaveHousehold() {
+  const me = getCurrentMember();
+  if (!me) return;
+
+  if (me.isAdmin && state.members.length > 1) {
+    return showAlert(
+      'You are the admin. Transfer admin rights to another member first, or remove all other members before leaving.',
+      'Cannot leave'
+    );
+  }
+
+  const ok = await showConfirm(
+    'Leave this household? Your local data will be cleared and you will return to setup.',
+    'Leave household'
+  );
+  if (!ok) return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(USER_KEY);
+  location.reload();
+}
+
+function addActivityRow() {
+  state.activities.push({ name: '', points: 1, emoji: '·' });
+  renderCustom();
+}
+
+async function removeActivityRow(idx) {
+  const ok = await showConfirm('Remove activity? Existing entries stay in stats.', 'Remove activity');
+  if (!ok) return;
+  state.activities.splice(idx, 1);
+  renderCustom();
+}
+
+async function saveCustom() {
+  // Activities
+  document.querySelectorAll('#activityCustomList input').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx);
+    const field = inp.dataset.field;
+    if (isNaN(idx) || !state.activities[idx]) return;
+    if (field === 'points') state.activities[idx][field] = parseInt(inp.value) || 0;
+    else state.activities[idx][field] = inp.value;
+  });
+  state.activities = state.activities.filter(a => a.name.trim());
+
+  // Household name (admin only)
+  if (isCurrentUserAdmin()) {
+    const newName = document.getElementById('householdNameInput').value.trim();
+    if (newName) {
+      state.household.name = newName;
+      document.getElementById('headerHousehold').textContent = newName;
+    }
+  }
+
+  saveData();
+  renderActivities();
+  renderCustom();
+  showMicroToast('Saved');
+}
+
+// =====================================================
+// EXPORT / IMPORT
+// =====================================================
+function exportData() {
+  let txt = '# HOUSEHOLD EXPORT\n';
+  txt += '# Format: tab-separated.\n';
+  txt += '# Created: ' + new Date().toISOString() + '\n\n';
+  txt += '## HOUSEHOLD\n';
+  txt += `Name\t${state.household.name}\n`;
+  txt += `InviteCode\t${state.household.inviteCode}\n`;
+  txt += `Created\t${state.household.createdAt}\n\n`;
+  txt += '## MEMBERS\n';
+  txt += 'Name\tIsAdmin\tJoinedAt\n';
+  state.members.forEach(m => { txt += `${m.name}\t${m.isAdmin}\t${m.joinedAt}\n`; });
+  txt += '\n## ACTIVITIES\n';
+  txt += 'Emoji\tActivity\tPoints\n';
+  state.activities.forEach(a => { txt += `${a.emoji || ''}\t${a.name}\t${a.points}\n`; });
+  txt += '\n## ENTRIES\n';
+  txt += 'Timestamp\tUser\tActivity\tPoints\n';
+  state.entries.forEach(e => { txt += `${e.timestamp}\t${e.userName}\t${e.activity}\t${e.points}\n`; });
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `household-${state.household.name.replace(/\s+/g, '-')}-${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const ok = await showConfirm('Import will replace activities and entries. Members and household stay. Continue?', 'Import');
+  if (!ok) { event.target.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      parseImport(e.target.result);
+      saveData();
+      renderActivities();
+      showMicroToast('Imported');
+    } catch (err) {
+      await showAlert('Import error: ' + err.message, 'Error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function parseImport(text) {
+  const lines = text.split(/\r?\n/);
+  let section = null;
+  const newActivities = [], newEntries = [];
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line || line.startsWith('#')) continue;
+    if (line.startsWith('## ACTIVITIES') || line.startsWith('## AKTIVITAETEN')) { section = 'a'; continue; }
+    if (line.startsWith('## ENTRIES') || line.startsWith('## EINTRAEGE')) { section = 'e'; continue; }
+    if (line.startsWith('## ')) { section = null; continue; }
+    if (line.startsWith('Emoji\t') || line.startsWith('Timestamp\t') || line.startsWith('Zeitstempel\t')) continue;
+
+    const parts = line.split('\t');
+    if (section === 'a' && parts.length >= 3) {
+      newActivities.push({ emoji: parts[0] || '·', name: parts[1], points: parseInt(parts[2]) || 0 });
+    } else if (section === 'e' && parts.length >= 4) {
+      // Try to map userName back to a member; if no match, mark with a placeholder userId
+      const userName = parts[1];
+      const member = state.members.find(m => m.name === userName);
+      newEntries.push({
+        id: uid('e_'),
+        timestamp: parts[0],
+        userId: member ? member.userId : 'u_imported',
+        userName: userName,
+        activity: parts[2],
+        points: parseInt(parts[3]) || 0,
+      });
+    }
+  }
+
+  if (newActivities.length) state.activities = newActivities;
+  state.entries = newEntries;
+}
+
+// =====================================================
+// BOOT
+// =====================================================
+document.addEventListener('DOMContentLoaded', () => {
+  setupWelcomeHandlers();
+  loadData();
+
+  // Decide what to show first
+  if (state.household && state.currentUserId && getCurrentMember()) {
+    initApp();
+  } else {
+    showSetupScreen('welcome');
+  }
+});
+</script>
+</body>
+</html>
