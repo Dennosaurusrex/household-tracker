@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supabase Connection Test</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --ink: #111111;
+    --ink-2: #555555;
+    --muted: #999999;
+    --line: #e8e8e8;
+    --line-strong: #d4d4d4;
+    --accent: #2563eb;
+    --success: #059669;
+    --warning: #d97706;
+    --danger: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .card h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  button {
+    background: var(--ink);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 15px;
+    width: 100%;
+    margin-bottom: 8px;
+    font-family: inherit;
+  }
+  button:active { opacity: 0.85; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+  }
+
+  .status {
+    background: #1a1a1a;
+    color: #d4d4d4;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-top: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .status .ok { color: #4ade80; }
+  .status .err { color: #f87171; }
+  .status .info { color: #60a5fa; }
+  .status .warn { color: #fbbf24; }
+
+  .config-warning {
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .info-line {
+    font-size: 13px;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+  .info-line strong { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧪 Supabase Connection Test</h1>
+  <p class="subtitle">Three steps to verify everything works.</p>
+
+  <div id="configWarning" class="config-warning" style="display:none;">
+    ⚠️ Configuration missing! Please edit this file and replace the placeholders at the top of the &lt;script&gt; section with your real Supabase URL and Publishable Key, then upload to GitHub again.
+  </div>
+
+  <div class="card">
+    <h2>Connection</h2>
+    <div class="info-line">URL: <strong id="urlDisplay">—</strong></div>
+    <div class="info-line">Key: <strong id="keyDisplay">—</strong></div>
+    <div class="info-line">Auth status: <strong id="authStatus">checking…</strong></div>
+  </div>
+
+  <div class="card">
+    <h2>1. Sign Up (create new account)</h2>
+    <input type="email" id="signupEmail" placeholder="your-email@example.com" autocomplete="email">
+    <input type="password" id="signupPassword" placeholder="Password (min. 6 characters)" autocomplete="new-password">
+    <button id="signupBtn">Create account</button>
+  </div>
+
+  <div class="card">
+    <h2>2. Sign In (existing account)</h2>
+    <input type="email" id="signinEmail" placeholder="your-email@example.com" autocomplete="email">
+    <input type="password" id="signinPassword" placeholder="Password" autocomplete="current-password">
+    <button id="signinBtn">Sign in</button>
+    <button id="signoutBtn" class="secondary">Sign out</button>
+  </div>
+
+  <div class="card">
+    <h2>3. Test write (creates a test household)</h2>
+    <button id="testWriteBtn">Write test entry to database</button>
+    <button id="testReadBtn" class="secondary">Read all my households</button>
+  </div>
+
+  <div class="card">
+    <h2>Output</h2>
+    <div class="status" id="status">Ready. Try Step 1 first.</div>
+  </div>
+</div>
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+'use strict';
+
+// =====================================================
+// !!! CONFIGURATION — REPLACE THESE TWO VALUES !!!
+// =====================================================
+const SUPABASE_URL = 'https://fcpdqawgpctazvjkzzcz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6QbBUjrwpzKDq3G5Xcya8Q_ahCtIPhy';
+// =====================================================
+
+let supabase = null;
+let currentUser = null;
+
+const statusEl = document.getElementById('status');
+const authStatusEl = document.getElementById('authStatus');
+
+function log(message, type = 'info') {
+  const time = new Date().toLocaleTimeString();
+  const line = `<span class="${type}">[${time}] ${message}</span>\n`;
+  statusEl.innerHTML = line + statusEl.innerHTML;
+}
+
+function clearLog() { statusEl.innerHTML = ''; }
+
+function checkConfig() {
+  const urlOk = SUPABASE_URL && !SUPABASE_URL.includes('HIER_');
+  const keyOk = SUPABASE_KEY && !SUPABASE_KEY.includes('HIER_');
+  if (!urlOk || !keyOk) {
+    document.getElementById('configWarning').style.display = 'block';
+    document.querySelectorAll('button').forEach(b => b.disabled = true);
+    return false;
+  }
+  document.getElementById('urlDisplay').textContent = SUPABASE_URL;
+  // Show only first 20 chars of key for visual confirmation
+  document.getElementById('keyDisplay').textContent = SUPABASE_KEY.slice(0, 25) + '...';
+  return true;
+}
+
+async function init() {
+  if (!checkConfig()) {
+    log('Configuration incomplete. Edit the file and re-upload.', 'err');
+    return;
+  }
+
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    log('Supabase client created successfully', 'ok');
+  } catch (e) {
+    log('Failed to create Supabase client: ' + e.message, 'err');
+    return;
+  }
+
+  // Check existing session
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    authStatusEl.textContent = `signed in as ${session.user.email}`;
+    log(`Already signed in as ${session.user.email}`, 'ok');
+  } else {
+    authStatusEl.textContent = 'not signed in';
+    log('Not signed in yet', 'info');
+  }
+
+  // Listen for auth changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session) {
+      currentUser = session.user;
+      authStatusEl.textContent = `signed in as ${session.user.email}`;
+    } else {
+      currentUser = null;
+      authStatusEl.textContent = 'not signed in';
+    }
+  });
+}
+
+// === SIGN UP ===
+document.getElementById('signupBtn').addEventListener('click', async () => {
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  if (!email || !password) {
+    log('Please enter email and password', 'warn');
+    return;
+  }
+  log(`Attempting sign up for ${email}…`, 'info');
+
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) {
+    log(`Sign up failed: ${error.message}`, 'err');
+    return;
+  }
+  if (data.user) {
+    if (data.user.identities && data.user.identities.length === 0) {
+      log(`Account already exists for ${email}. Try Sign In instead.`, 'warn');
+    } else if (!data.session) {
+      log(`Account created for ${email}. Check your email for confirmation link (if enabled).`, 'ok');
+      log(`Or sign in directly if email confirmation is OFF in Supabase Auth settings.`, 'info');
+    } else {
+      log(`Account created and signed in as ${email}`, 'ok');
+    }
+  }
+});
+
+// === SIGN IN ===
+document.getElementById('signinBtn').addEventListener('click', async () => {
+  const email = document.getElementById('signinEmail').value.trim();
+  const password = document.getElementById('signinPassword').value;
+  if (!email || !password) {
+    log('Please enter email and password', 'warn');
+    return;
+  }
+  log(`Attempting sign in for ${email}…`, 'info');
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    log(`Sign in failed: ${error.message}`, 'err');
+    return;
+  }
+  if (data.user) {
+    log(`Signed in successfully as ${email}`, 'ok');
+    log(`User ID: ${data.user.id}`, 'info');
+  }
+});
+
+// === SIGN OUT ===
+document.getElementById('signoutBtn').addEventListener('click', async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) log(`Sign out failed: ${error.message}`, 'err');
+  else log('Signed out', 'ok');
+});
+
+// === TEST WRITE ===
+document.getElementById('testWriteBtn').addEventListener('click', async () => {
+  if (!currentUser) {
+    log('You must sign in first!', 'warn');
+    return;
+  }
+  log('Inserting test household into database…', 'info');
+
+  const testName = `Test Household ${new Date().toISOString().slice(11, 19)}`;
+
+  const { data, error } = await supabase
+    .from('households')
+    .insert({
+      name: testName,
+      owner_id: currentUser.id
+    })
+    .select();
+
+  if (error) {
+    log(`INSERT failed: ${error.message}`, 'err');
+    log(`Error code: ${error.code}`, 'err');
+    if (error.message.includes('row-level security')) {
+      log('This is a RLS policy issue. The "create own household" policy needs auth.uid() = owner_id.', 'warn');
+    }
+    return;
+  }
+
+  if (data && data.length > 0) {
+    log(`✓ Successfully inserted household "${data[0].name}"`, 'ok');
+    log(`Household ID: ${data[0].id}`, 'info');
+
+    // Now also add ourselves as a member (so RLS policies allow us to read it back)
+    log('Adding myself as household member…', 'info');
+    const { error: memberError } = await supabase
+      .from('household_members')
+      .insert({
+        household_id: data[0].id,
+        user_id: currentUser.id
+      });
+
+    if (memberError) {
+      log(`Member add failed: ${memberError.message}`, 'err');
+    } else {
+      log('✓ Added as member. You can now read this household.', 'ok');
+    }
+  }
+});
+
+// === TEST READ ===
+document.getElementById('testReadBtn').addEventListener('click', async () => {
+  if (!currentUser) {
+    log('You must sign in first!', 'warn');
+    return;
+  }
+  log('Reading households visible to me…', 'info');
+
+  const { data, error } = await supabase
+    .from('households')
+    .select('id, name, created_at, owner_id')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    log(`SELECT failed: ${error.message}`, 'err');
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    log('No households visible. RLS may be blocking, or none exist yet.', 'warn');
+    log('Try Step 3 (write) first to create one.', 'info');
+    return;
+  }
+
+  log(`✓ Found ${data.length} household(s):`, 'ok');
+  data.forEach(h => {
+    log(`  • ${h.name} (id: ${h.id.slice(0, 8)}…)`, 'info');
+  });
+});
+
+// === START ===
+init();
+</script>
+</body>
+</html>
