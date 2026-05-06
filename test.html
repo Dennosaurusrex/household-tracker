@@ -30,10 +30,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .container {
-    max-width: 500px;
-    margin: 0 auto;
-  }
+  .container { max-width: 500px; margin: 0 auto; }
 
   h1 {
     font-size: 22px;
@@ -141,7 +138,7 @@
   <p class="subtitle">Three steps to verify everything works.</p>
 
   <div id="configWarning" class="config-warning" style="display:none;">
-    ⚠️ Configuration missing! Please edit this file and replace the placeholders at the top of the &lt;script&gt; section with your real Supabase URL and Publishable Key, then upload to GitHub again.
+    ⚠️ Configuration missing! Please edit this file and replace the placeholders at the top of the &lt;script&gt; section with your real Supabase URL and Publishable Key.
   </div>
 
   <div class="card">
@@ -191,7 +188,7 @@ const SUPABASE_URL = 'https://fcpdqawgpctazvjkzzcz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_6QbBUjrwpzKDq3G5Xcya8Q_ahCtIPhy';
 // =====================================================
 
-let supabase = null;
+let sb = null;          // renamed from "supabase" to avoid name conflict with the global
 let currentUser = null;
 
 const statusEl = document.getElementById('status');
@@ -203,8 +200,6 @@ function log(message, type = 'info') {
   statusEl.innerHTML = line + statusEl.innerHTML;
 }
 
-function clearLog() { statusEl.innerHTML = ''; }
-
 function checkConfig() {
   const urlOk = SUPABASE_URL && !SUPABASE_URL.includes('HIER_');
   const keyOk = SUPABASE_KEY && !SUPABASE_KEY.includes('HIER_');
@@ -214,7 +209,6 @@ function checkConfig() {
     return false;
   }
   document.getElementById('urlDisplay').textContent = SUPABASE_URL;
-  // Show only first 20 chars of key for visual confirmation
   document.getElementById('keyDisplay').textContent = SUPABASE_KEY.slice(0, 25) + '...';
   return true;
 }
@@ -225,16 +219,22 @@ async function init() {
     return;
   }
 
+  // Check that the global library actually loaded
+  if (!window.supabase || !window.supabase.createClient) {
+    log('Supabase library failed to load. Check your network or CDN block.', 'err');
+    authStatusEl.textContent = 'library not loaded';
+    return;
+  }
+
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     log('Supabase client created successfully', 'ok');
   } catch (e) {
     log('Failed to create Supabase client: ' + e.message, 'err');
     return;
   }
 
-  // Check existing session
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
     authStatusEl.textContent = `signed in as ${session.user.email}`;
@@ -244,8 +244,7 @@ async function init() {
     log('Not signed in yet', 'info');
   }
 
-  // Listen for auth changes
-  supabase.auth.onAuthStateChange((event, session) => {
+  sb.auth.onAuthStateChange((event, session) => {
     if (session) {
       currentUser = session.user;
       authStatusEl.textContent = `signed in as ${session.user.email}`;
@@ -266,7 +265,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   }
   log(`Attempting sign up for ${email}…`, 'info');
 
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await sb.auth.signUp({ email, password });
   if (error) {
     log(`Sign up failed: ${error.message}`, 'err');
     return;
@@ -293,7 +292,7 @@ document.getElementById('signinBtn').addEventListener('click', async () => {
   }
   log(`Attempting sign in for ${email}…`, 'info');
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error) {
     log(`Sign in failed: ${error.message}`, 'err');
     return;
@@ -306,7 +305,7 @@ document.getElementById('signinBtn').addEventListener('click', async () => {
 
 // === SIGN OUT ===
 document.getElementById('signoutBtn').addEventListener('click', async () => {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await sb.auth.signOut();
   if (error) log(`Sign out failed: ${error.message}`, 'err');
   else log('Signed out', 'ok');
 });
@@ -321,7 +320,7 @@ document.getElementById('testWriteBtn').addEventListener('click', async () => {
 
   const testName = `Test Household ${new Date().toISOString().slice(11, 19)}`;
 
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('households')
     .insert({
       name: testName,
@@ -342,9 +341,8 @@ document.getElementById('testWriteBtn').addEventListener('click', async () => {
     log(`✓ Successfully inserted household "${data[0].name}"`, 'ok');
     log(`Household ID: ${data[0].id}`, 'info');
 
-    // Now also add ourselves as a member (so RLS policies allow us to read it back)
     log('Adding myself as household member…', 'info');
-    const { error: memberError } = await supabase
+    const { error: memberError } = await sb
       .from('household_members')
       .insert({
         household_id: data[0].id,
@@ -367,7 +365,7 @@ document.getElementById('testReadBtn').addEventListener('click', async () => {
   }
   log('Reading households visible to me…', 'info');
 
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('households')
     .select('id, name, created_at, owner_id')
     .order('created_at', { ascending: false });
