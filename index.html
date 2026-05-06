@@ -20,9 +20,7 @@
     --warning: #d97706;
     --danger: #dc2626;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
   html, body {
     background: var(--bg);
     color: var(--ink);
@@ -33,7 +31,6 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-
   body { padding: 0 0 80px 0; }
   button { font-family: inherit; }
 
@@ -97,7 +94,6 @@
   /* === SCREENS === */
   .screen { display: none; padding: 24px 20px; }
   .screen.active { display: block; }
-
   .screen-title {
     font-size: 24px;
     font-weight: 600;
@@ -247,7 +243,6 @@
     transition: all 0.15s;
   }
   .period-tab.active { background: var(--ink); color: white; }
-
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -263,7 +258,6 @@
     margin-bottom: 14px;
     font-weight: 600;
   }
-
   .leaderboard-row {
     display: flex;
     align-items: center;
@@ -278,7 +272,6 @@
   .player-name { flex: 1; font-weight: 500; font-size: 15px; }
   .player-points { font-weight: 600; font-size: 15px; color: var(--ink); }
   .player-points::after { content: ' pts'; font-weight: 400; color: var(--muted); font-size: 13px; }
-
   .top-activity {
     display: flex;
     justify-content: space-between;
@@ -316,7 +309,6 @@
     color: var(--ink);
   }
   .form-input:focus, .form-select:focus { outline: none; border-color: var(--ink); }
-
   .btn {
     background: var(--ink);
     color: white;
@@ -331,6 +323,7 @@
     touch-action: manipulation;
   }
   .btn:active { opacity: 0.85; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
   .btn-danger { background: var(--surface); color: var(--danger); border-color: var(--line-strong); }
 
@@ -440,10 +433,8 @@
   .member-info { flex: 1; min-width: 0; }
   .member-name { font-weight: 500; font-size: 14px; }
   .member-role { font-size: 12px; color: var(--muted); }
-  .member-role .you-tag {
+  .member-role .you-tag, .member-role .admin-role-tag {
     display: inline-block;
-    background: var(--accent-soft);
-    color: var(--accent);
     padding: 1px 6px;
     border-radius: 3px;
     font-size: 10px;
@@ -452,18 +443,8 @@
     text-transform: uppercase;
     letter-spacing: 0.4px;
   }
-  .member-role .admin-role-tag {
-    display: inline-block;
-    background: var(--ink);
-    color: white;
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: 700;
-    margin-left: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
+  .member-role .you-tag { background: var(--accent-soft); color: var(--accent); }
+  .member-role .admin-role-tag { background: var(--ink); color: white; }
 
   /* === INVITE BOX === */
   .invite-box {
@@ -566,7 +547,6 @@
     max-width: 320px;
   }
   .setup-screen .form-group { width: 100%; max-width: 320px; }
-
   .setup-choice {
     display: grid;
     gap: 10px;
@@ -596,7 +576,6 @@
     color: var(--muted);
     font-size: 13px;
   }
-
   .back-link {
     color: var(--muted);
     font-size: 13px;
@@ -607,13 +586,9 @@
     padding: 8px;
     text-decoration: underline;
   }
-
-  /* === DATA ACTIONS === */
   .data-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .data-actions .btn { padding: 10px; font-size: 13px; }
-
   .crown { font-size: 14px; margin-left: 4px; opacity: 0.7; }
-
   .info-banner {
     background: #fffbeb;
     border: 1px solid #fef3c7;
@@ -624,15 +599,65 @@
     margin-bottom: 14px;
     line-height: 1.4;
   }
+
+  /* === AUTH SCREEN === */
+  .auth-message {
+    background: var(--accent-soft);
+    border: 1px solid #bfdbfe;
+    color: var(--accent);
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 16px;
+    max-width: 320px;
+  }
+  .loader {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--line-strong);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .signed-in-info {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
 </style>
 </head>
 <body>
 
-<!-- ===== SETUP: WELCOME ===== -->
-<div class="setup-screen" id="screen-welcome">
+<!-- ===== LOADING SCREEN ===== -->
+<div class="setup-screen" id="screen-loading">
+  <div class="setup-logo">🏠</div>
+  <p><span class="loader"></span> Loading…</p>
+</div>
+
+<!-- ===== AUTH SCREEN: SIGN IN ===== -->
+<div class="setup-screen hidden" id="screen-auth">
   <div class="setup-logo">🏠</div>
   <h1>Household</h1>
-  <p>Track who does what at home. Make it visible. Make it fun.</p>
+  <p>Sign in with your email. We'll send you a magic link — no password needed.</p>
+  <div class="form-group">
+    <input type="email" class="form-input" id="authEmail" placeholder="your-email@example.com" autocomplete="email">
+  </div>
+  <div class="form-group">
+    <button class="btn" id="authSubmit">Send magic link</button>
+  </div>
+  <div id="authMessage"></div>
+</div>
+
+<!-- ===== WELCOME SCREEN (after sign-in, no household yet) ===== -->
+<div class="setup-screen hidden" id="screen-welcome">
+  <div class="setup-logo">👋</div>
+  <h1>Welcome!</h1>
+  <p id="welcomeUserEmail">Signed in.</p>
   <div class="setup-choice">
     <button class="choice-card" id="choiceCreate">
       <div class="choice-card-title">Create new household</div>
@@ -643,6 +668,7 @@
       <div class="choice-card-sub">Use an invite code from a family member</div>
     </button>
   </div>
+  <button class="back-link" id="welcomeSignOut">Sign out</button>
 </div>
 
 <!-- ===== SETUP: CREATE HOUSEHOLD ===== -->
@@ -683,9 +709,8 @@
     <button class="btn" id="joinSubmit">Join</button>
   </div>
   <button class="back-link" id="joinBack">← Back</button>
-
   <div class="info-banner" style="max-width:320px; margin-top:16px;">
-    <strong>Local mode:</strong> Real invite codes work after Supabase setup. For now you can simulate joining a friend's household.
+    <strong>Local mode:</strong> Real invite codes will work in the next step. For now, joining is simulated locally.
   </div>
 </div>
 
@@ -703,21 +728,18 @@
     </div>
   </header>
 
-  <!-- HOME -->
   <section class="screen active" id="screen-home">
     <h2 class="screen-title">What did you do?</h2>
     <p class="screen-subtitle">Tap to log an activity.</p>
     <div class="activity-grid" id="activityGrid"></div>
   </section>
 
-  <!-- HISTORY -->
   <section class="screen" id="screen-correct">
     <h2 class="screen-title">History</h2>
     <p class="screen-subtitle">Edit or delete your entries.</p>
     <div id="entryList"></div>
   </section>
 
-  <!-- STATS -->
   <section class="screen" id="screen-stats">
     <h2 class="screen-title">Score</h2>
     <p class="screen-subtitle">Who kept the household running?</p>
@@ -738,29 +760,22 @@
     </div>
   </section>
 
-  <!-- SETTINGS -->
   <section class="screen" id="screen-custom">
     <h2 class="screen-title">Settings</h2>
     <p class="screen-subtitle">Manage your household.</p>
 
-    <!-- Members section -->
     <div class="custom-section">
-      <h2>
-        Members
-        <span class="badge" id="memberCountBadge">0</span>
-      </h2>
+      <h2>Members <span class="badge" id="memberCountBadge">0</span></h2>
       <div id="memberList"></div>
       <div id="inviteBox"></div>
     </div>
 
-    <!-- Activities section -->
     <div class="custom-section">
       <h2>Activities</h2>
       <div id="activityCustomList"></div>
       <button class="add-row-btn" id="addActivityBtn">+ Add activity</button>
     </div>
 
-    <!-- Household settings -->
     <div class="custom-section">
       <h2>Household</h2>
       <div class="form-group" style="margin-bottom: 8px;">
@@ -770,7 +785,13 @@
       </div>
     </div>
 
-    <!-- Data section -->
+    <div class="custom-section">
+      <h2>Account</h2>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;" id="accountEmailDisplay">Signed in as —</p>
+      <button class="btn btn-secondary" id="signOutBtn">Sign out</button>
+      <button class="btn btn-danger" id="leaveHouseholdBtn" style="margin-top:8px;">Leave household</button>
+    </div>
+
     <div class="custom-section">
       <h2>Data</h2>
       <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
@@ -781,9 +802,6 @@
         <button class="btn btn-secondary" id="importBtnVisible">Import</button>
       </div>
       <input type="file" id="importFile" style="display:none" accept=".txt,.tsv">
-      <div style="margin-top: 10px;">
-        <button class="btn btn-danger" id="leaveHouseholdBtn">Leave household</button>
-      </div>
     </div>
 
     <div style="margin-top: 16px;">
@@ -791,7 +809,6 @@
     </div>
   </section>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-screen="home"><span class="icon">⊕</span><span>Log</span></button>
     <button class="nav-btn" data-screen="correct"><span class="icon">≡</span><span>History</span></button>
@@ -800,10 +817,8 @@
   </nav>
 </div>
 
-<!-- MICRO TOAST -->
 <div class="micro-toast" id="microToast">Logged</div>
 
-<!-- EDIT MODAL -->
 <div class="modal-overlay" id="editModal">
   <div class="modal">
     <h2>Edit entry</h2>
@@ -818,7 +833,6 @@
   </div>
 </div>
 
-<!-- CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal">
     <h2 id="confirmTitle">Are you sure?</h2>
@@ -830,7 +844,6 @@
   </div>
 </div>
 
-<!-- ALERT MODAL -->
 <div class="modal-overlay" id="alertModal">
   <div class="modal">
     <h2 id="alertTitle">Notice</h2>
@@ -841,8 +854,18 @@
   </div>
 </div>
 
+<!-- Supabase Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 'use strict';
+
+// =====================================================
+// !!! CONFIGURATION — REPLACE THESE TWO VALUES !!!
+// =====================================================
+const SUPABASE_URL = 'https://fcpdqawgpctazvjkzzcz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6QbBUjrwpzKDq3G5Xcya8Q_ahCtIPhy';
+// =====================================================
 
 // =====================================================
 // DEFAULT DATA
@@ -867,24 +890,18 @@ const DEFAULT_ACTIVITIES = [
 ];
 
 // =====================================================
-// STORAGE
-// =====================================================
-// Single storage key holds entire household state. This makes
-// Supabase migration trivial later — one row in the DB matches one object.
-const STORAGE_KEY = 'household_state_v2';
-const USER_KEY = 'household_current_user_id_v2';
-
-// =====================================================
 // STATE
 // =====================================================
-// The "household" object will later live in Supabase.
-// Structure mirrors what the database tables will hold.
+const STORAGE_KEY = 'household_state_v3';
+
+let sb = null;            // Supabase client
+let authUser = null;      // currently signed-in user (from Supabase auth)
+
 let state = {
-  household: null,    // { id, name, inviteCode, adminUserId, createdAt }
-  members: [],        // [{ userId, name, joinedAt, isAdmin }]
-  activities: [],     // [{ name, points, emoji }]
-  entries: [],        // [{ id, timestamp, userId, userName, activity, points }]
-  currentUserId: null,
+  household: null,
+  members: [],
+  activities: [],
+  entries: [],
   currentPeriod: 'week',
   editingEntryId: null,
 };
@@ -897,8 +914,7 @@ function uid(prefix = '') {
 }
 
 function generateInviteCode() {
-  // HH-XXXX-XXXX format, easy to type
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const part = (n) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   return `HH-${part(4)}-${part(4)}`;
 }
@@ -922,7 +938,8 @@ function formatDate(iso) {
 }
 
 function getCurrentMember() {
-  return state.members.find(m => m.userId === state.currentUserId);
+  if (!authUser) return null;
+  return state.members.find(m => m.userId === authUser.id);
 }
 
 function isCurrentUserAdmin() {
@@ -935,10 +952,9 @@ function getMemberById(userId) {
 }
 
 // =====================================================
-// PERSISTENCE
+// LOCAL PERSISTENCE (later replaced/augmented with Supabase)
 // =====================================================
-function loadData() {
-  state.currentUserId = localStorage.getItem(USER_KEY);
+function loadLocalState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && saved.household) {
@@ -946,13 +962,13 @@ function loadData() {
       state.members = saved.members || [];
       state.activities = saved.activities || [];
       state.entries = saved.entries || [];
+      return true;
     }
-  } catch {
-    // corrupt data — start fresh
-  }
+  } catch {}
+  return false;
 }
 
-function saveData() {
+function saveLocalState() {
   const payload = {
     household: state.household,
     members: state.members,
@@ -960,7 +976,14 @@ function saveData() {
     entries: state.entries,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  if (state.currentUserId) localStorage.setItem(USER_KEY, state.currentUserId);
+}
+
+function clearLocalState() {
+  localStorage.removeItem(STORAGE_KEY);
+  state.household = null;
+  state.members = [];
+  state.activities = [];
+  state.entries = [];
 }
 
 // =====================================================
@@ -1008,10 +1031,12 @@ function showMicroToast(message) {
 }
 
 // =====================================================
-// SETUP / WELCOME FLOW
+// SCREEN ROUTING
 // =====================================================
+const SETUP_SCREENS = ['loading', 'auth', 'welcome', 'create', 'join'];
+
 function showSetupScreen(name) {
-  ['welcome', 'create', 'join'].forEach(s => {
+  SETUP_SCREENS.forEach(s => {
     const el = document.getElementById('screen-' + s);
     if (s === name) el.classList.remove('hidden');
     else el.classList.add('hidden');
@@ -1019,50 +1044,159 @@ function showSetupScreen(name) {
   document.getElementById('app').style.display = 'none';
 }
 
-function setupWelcomeHandlers() {
-  document.getElementById('choiceCreate').addEventListener('click', () => showSetupScreen('create'));
-  document.getElementById('choiceJoin').addEventListener('click', () => showSetupScreen('join'));
-  document.getElementById('createBack').addEventListener('click', () => showSetupScreen('welcome'));
-  document.getElementById('joinBack').addEventListener('click', () => showSetupScreen('welcome'));
-  document.getElementById('createSubmit').addEventListener('click', handleCreateHousehold);
-  document.getElementById('joinSubmit').addEventListener('click', handleJoinHousehold);
+// =====================================================
+// SUPABASE INIT & AUTH FLOW
+// =====================================================
+function checkConfig() {
+  if (!SUPABASE_URL || SUPABASE_URL.includes('HIER_') || !SUPABASE_KEY || SUPABASE_KEY.includes('HIER_')) {
+    return false;
+  }
+  if (!window.supabase || !window.supabase.createClient) {
+    return false;
+  }
+  return true;
+}
 
-  // Pre-fill invite code from URL if present (?join=HH-XXXX-XXXX)
-  const urlParams = new URLSearchParams(window.location.search);
-  const joinCode = urlParams.get('join');
-  if (joinCode) {
-    document.getElementById('joinCode').value = joinCode;
-    showSetupScreen('join');
+async function initSupabase() {
+  if (!checkConfig()) {
+    await showAlert('Supabase configuration is missing. Edit the file and replace the placeholders, then re-upload.', 'Configuration error');
+    return false;
+  }
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      }
+    });
+    return true;
+  } catch (e) {
+    await showAlert('Failed to initialize: ' + e.message, 'Error');
+    return false;
   }
 }
 
+async function startApp() {
+  showSetupScreen('loading');
+
+  const ok = await initSupabase();
+  if (!ok) return;
+
+  // Check for existing session — Supabase will auto-detect magic link tokens in URL
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    authUser = session.user;
+    afterAuth();
+  } else {
+    showSetupScreen('auth');
+  }
+
+  // Listen for auth changes (e.g. when magic link comes back)
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      authUser = session.user;
+      // Clean magic-link tokens from URL
+      if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+      afterAuth();
+    } else if (event === 'SIGNED_OUT') {
+      authUser = null;
+      clearLocalState();
+      showSetupScreen('auth');
+    }
+  });
+}
+
+function afterAuth() {
+  // Try to restore household from local state
+  const hasLocal = loadLocalState();
+  if (hasLocal) {
+    initApp();
+  } else {
+    // Show welcome with create/join choice
+    document.getElementById('welcomeUserEmail').textContent = `Signed in as ${authUser.email}`;
+    showSetupScreen('welcome');
+  }
+}
+
+// =====================================================
+// AUTH HANDLERS
+// =====================================================
+async function handleSendMagicLink() {
+  const emailInput = document.getElementById('authEmail');
+  const submitBtn = document.getElementById('authSubmit');
+  const messageEl = document.getElementById('authMessage');
+  const email = emailInput.value.trim();
+
+  if (!email) {
+    messageEl.innerHTML = '<div class="auth-message" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">Please enter your email.</div>';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="loader"></span> Sending…';
+  messageEl.innerHTML = '';
+
+  const { error } = await sb.auth.signInWithOtp({
+    email: email,
+    options: {
+      emailRedirectTo: window.location.origin + window.location.pathname,
+    }
+  });
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Send magic link';
+
+  if (error) {
+    messageEl.innerHTML = `<div class="auth-message" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">${escapeHtml(error.message)}</div>`;
+    return;
+  }
+
+  messageEl.innerHTML = `
+    <div class="auth-message">
+      <strong>✓ Magic link sent to ${escapeHtml(email)}</strong><br>
+      Check your inbox. Click the link to sign in. You can close this tab.
+    </div>
+  `;
+}
+
+async function handleSignOut() {
+  const ok = await showConfirm('Sign out from this device?', 'Sign out');
+  if (!ok) return;
+  await sb.auth.signOut();
+  // onAuthStateChange handles the rest
+}
+
+// =====================================================
+// HOUSEHOLD CREATE/JOIN (local for now — Supabase wiring in next step)
+// =====================================================
 async function handleCreateHousehold() {
   const householdName = document.getElementById('createHouseholdName').value.trim();
   const userName = document.getElementById('createUserName').value.trim();
   if (!householdName) return showAlert('Please enter a household name.');
   if (!userName) return showAlert('Please enter your name.');
 
-  const userId = uid('u_');
   const householdId = uid('h_');
 
   state.household = {
     id: householdId,
     name: householdName,
     inviteCode: generateInviteCode(),
-    adminUserId: userId,
+    adminUserId: authUser.id,
     createdAt: new Date().toISOString(),
   };
   state.members = [{
-    userId: userId,
+    userId: authUser.id,
     name: userName,
     isAdmin: true,
     joinedAt: new Date().toISOString(),
   }];
   state.activities = DEFAULT_ACTIVITIES.slice();
   state.entries = [];
-  state.currentUserId = userId;
 
-  saveData();
+  saveLocalState();
   initApp();
   showMicroToast(`Welcome to ${householdName}`);
 }
@@ -1076,48 +1210,38 @@ async function handleJoinHousehold() {
     return showAlert('Code format should be: HH-XXXX-XXXX', 'Invalid code');
   }
 
-  // LOCAL MODE: We can't really lookup other households without a backend.
-  // We simulate joining by creating a pseudo-household with that code.
-  // Once Supabase is wired, this is replaced with a real lookup.
-  const userId = uid('u_');
   const householdId = uid('h_');
-
   state.household = {
     id: householdId,
     name: 'Shared household',
     inviteCode: code,
-    adminUserId: 'u_someone_else', // placeholder — admin is unknown locally
+    adminUserId: 'someone_else',
     createdAt: new Date().toISOString(),
   };
   state.members = [
-    { userId: 'u_someone_else', name: 'Admin (placeholder)', isAdmin: true, joinedAt: new Date().toISOString() },
-    { userId: userId, name: userName, isAdmin: false, joinedAt: new Date().toISOString() },
+    { userId: 'someone_else', name: 'Admin (placeholder)', isAdmin: true, joinedAt: new Date().toISOString() },
+    { userId: authUser.id, name: userName, isAdmin: false, joinedAt: new Date().toISOString() },
   ];
   state.activities = DEFAULT_ACTIVITIES.slice();
   state.entries = [];
-  state.currentUserId = userId;
 
-  saveData();
+  saveLocalState();
   initApp();
-  await showAlert(
-    'You joined in local-only mode. Real household joining works after Supabase is connected. For now, you can play around with the app.',
-    'Joined (local mode)'
-  );
+  await showAlert('Joined in local mode. Real cross-device joining will work in the next step.', 'Joined');
 }
 
 // =====================================================
 // INIT MAIN APP
 // =====================================================
 function initApp() {
-  ['welcome', 'create', 'join'].forEach(s => {
-    document.getElementById('screen-' + s).classList.add('hidden');
-  });
+  SETUP_SCREENS.forEach(s => document.getElementById('screen-' + s).classList.add('hidden'));
   document.getElementById('app').style.display = 'block';
 
   document.getElementById('headerHousehold').textContent = state.household.name;
   const me = getCurrentMember();
   document.getElementById('userName').textContent = me ? me.name : '—';
   document.getElementById('adminTag').style.display = isCurrentUserAdmin() ? 'inline-block' : 'none';
+  document.getElementById('accountEmailDisplay').textContent = `Signed in as ${authUser.email}`;
 
   renderActivities();
   setupNavigation();
@@ -1134,6 +1258,7 @@ function setupStaticHandlers() {
   document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
   document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
   document.getElementById('leaveHouseholdBtn').addEventListener('click', leaveHousehold);
+  document.getElementById('signOutBtn').addEventListener('click', handleSignOut);
 }
 
 // =====================================================
@@ -1192,7 +1317,7 @@ function recordActivity(idx, btnEl) {
     points: a.points,
   };
   state.entries.push(entry);
-  saveData();
+  saveLocalState();
 
   if (btnEl) {
     btnEl.classList.add('flash');
@@ -1208,7 +1333,7 @@ function recordActivity(idx, btnEl) {
 function renderEntries() {
   const list = document.getElementById('entryList');
   const myEntries = state.entries
-    .filter(e => e.userId === state.currentUserId)
+    .filter(e => e.userId === authUser.id)
     .slice().reverse().slice(0, 50);
 
   if (myEntries.length === 0) {
@@ -1247,7 +1372,7 @@ async function deleteEntry(id) {
   const ok = await showConfirm('Really delete this entry?', 'Delete entry');
   if (!ok) return;
   state.entries = state.entries.filter(e => e.id !== id);
-  saveData();
+  saveLocalState();
   renderEntries();
 }
 
@@ -1275,7 +1400,7 @@ function saveEdit() {
   if (entry) {
     entry.activity = activity.name;
     entry.points = activity.points;
-    saveData();
+    saveLocalState();
     renderEntries();
   }
   closeEditModal();
@@ -1311,14 +1436,12 @@ function renderStats() {
   const start = getPeriodStart(state.currentPeriod);
   const filtered = state.entries.filter(e => new Date(e.timestamp) >= start);
 
-  // Build totals by userId — fall back to userName if user removed
   const totals = {};
   filtered.forEach(e => {
     const member = getMemberById(e.userId);
     const displayName = member ? member.name : e.userName + ' (removed)';
     totals[displayName] = (totals[displayName] || 0) + e.points;
   });
-  // Show all current members, even if 0
   state.members.forEach(m => { if (!(m.name in totals)) totals[m.name] = 0; });
 
   const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
@@ -1354,13 +1477,12 @@ function renderStats() {
 }
 
 // =====================================================
-// SETTINGS / CUSTOMIZING
+// SETTINGS
 // =====================================================
 function renderCustom() {
   renderMembers();
   renderInviteBox();
 
-  // Activities list
   const ac = document.getElementById('activityCustomList');
   ac.innerHTML = '';
   state.activities.forEach((a, i) => {
@@ -1381,7 +1503,6 @@ function renderCustom() {
     });
   });
 
-  // Household name (only editable for admin)
   const nameInput = document.getElementById('householdNameInput');
   nameInput.value = state.household.name;
   nameInput.disabled = !isCurrentUserAdmin();
@@ -1393,7 +1514,7 @@ function renderMembers() {
   document.getElementById('memberCountBadge').textContent = state.members.length;
   list.innerHTML = '';
   state.members.forEach((m) => {
-    const isMe = m.userId === state.currentUserId;
+    const isMe = m.userId === authUser.id;
     const initials = m.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
     const meTag = isMe ? '<span class="you-tag">You</span>' : '';
     const adminTag = m.isAdmin ? '<span class="admin-role-tag">Admin</span>' : '';
@@ -1402,7 +1523,6 @@ function renderMembers() {
     item.className = 'member-item';
 
     let actionBtn = '';
-    // Admin can remove non-admin members. Admin cannot remove themselves directly.
     if (isCurrentUserAdmin() && !m.isAdmin && !isMe) {
       actionBtn = `<button class="icon-btn danger" data-remove-member="${m.userId}" aria-label="Remove">×</button>`;
     }
@@ -1430,7 +1550,6 @@ function renderInviteBox() {
     return;
   }
   const code = state.household.inviteCode;
-  // Build invite URL based on current location
   const baseUrl = window.location.origin + window.location.pathname;
   const inviteUrl = `${baseUrl}?join=${encodeURIComponent(code)}`;
 
@@ -1447,26 +1566,21 @@ function renderInviteBox() {
   `;
 
   document.getElementById('copyCodeBtn').addEventListener('click', () => {
-    copyToClipboard(code);
-    showMicroToast('Code copied');
+    copyToClipboard(code); showMicroToast('Code copied');
   });
   document.getElementById('shareInviteBtn').addEventListener('click', async () => {
     const text = `Join our household tracker. Code: ${code}\n\n${inviteUrl}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'Join household', text, url: inviteUrl }); } catch {}
     } else {
-      copyToClipboard(inviteUrl);
-      showMicroToast('Link copied');
+      copyToClipboard(inviteUrl); showMicroToast('Link copied');
     }
   });
 }
 
 function copyToClipboard(text) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-  } else {
-    fallbackCopy(text);
-  }
+  if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  else fallbackCopy(text);
 }
 function fallbackCopy(text) {
   const ta = document.createElement('textarea');
@@ -1481,13 +1595,10 @@ function fallbackCopy(text) {
 async function removeMember(userId) {
   const member = getMemberById(userId);
   if (!member) return;
-  const ok = await showConfirm(
-    `Remove "${member.name}" from the household? Their previous entries will stay in the stats.`,
-    'Remove member'
-  );
+  const ok = await showConfirm(`Remove "${member.name}"? Their entries will stay in stats.`, 'Remove member');
   if (!ok) return;
   state.members = state.members.filter(m => m.userId !== userId);
-  saveData();
+  saveLocalState();
   renderCustom();
   showMicroToast(`${member.name} removed`);
 }
@@ -1495,23 +1606,14 @@ async function removeMember(userId) {
 async function leaveHousehold() {
   const me = getCurrentMember();
   if (!me) return;
-
   if (me.isAdmin && state.members.length > 1) {
-    return showAlert(
-      'You are the admin. Transfer admin rights to another member first, or remove all other members before leaving.',
-      'Cannot leave'
-    );
+    return showAlert('You are the admin. Transfer admin rights or remove all other members first.', 'Cannot leave');
   }
-
-  const ok = await showConfirm(
-    'Leave this household? Your local data will be cleared and you will return to setup.',
-    'Leave household'
-  );
+  const ok = await showConfirm('Leave this household? Local data will be cleared.', 'Leave household');
   if (!ok) return;
-
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(USER_KEY);
-  location.reload();
+  clearLocalState();
+  document.getElementById('welcomeUserEmail').textContent = `Signed in as ${authUser.email}`;
+  showSetupScreen('welcome');
 }
 
 function addActivityRow() {
@@ -1527,7 +1629,6 @@ async function removeActivityRow(idx) {
 }
 
 async function saveCustom() {
-  // Activities
   document.querySelectorAll('#activityCustomList input').forEach(inp => {
     const idx = parseInt(inp.dataset.idx);
     const field = inp.dataset.field;
@@ -1537,7 +1638,6 @@ async function saveCustom() {
   });
   state.activities = state.activities.filter(a => a.name.trim());
 
-  // Household name (admin only)
   if (isCurrentUserAdmin()) {
     const newName = document.getElementById('householdNameInput').value.trim();
     if (newName) {
@@ -1546,7 +1646,7 @@ async function saveCustom() {
     }
   }
 
-  saveData();
+  saveLocalState();
   renderActivities();
   renderCustom();
   showMicroToast('Saved');
@@ -1557,12 +1657,10 @@ async function saveCustom() {
 // =====================================================
 function exportData() {
   let txt = '# HOUSEHOLD EXPORT\n';
-  txt += '# Format: tab-separated.\n';
   txt += '# Created: ' + new Date().toISOString() + '\n\n';
   txt += '## HOUSEHOLD\n';
   txt += `Name\t${state.household.name}\n`;
-  txt += `InviteCode\t${state.household.inviteCode}\n`;
-  txt += `Created\t${state.household.createdAt}\n\n`;
+  txt += `InviteCode\t${state.household.inviteCode}\n\n`;
   txt += '## MEMBERS\n';
   txt += 'Name\tIsAdmin\tJoinedAt\n';
   state.members.forEach(m => { txt += `${m.name}\t${m.isAdmin}\t${m.joinedAt}\n`; });
@@ -1585,13 +1683,13 @@ function exportData() {
 async function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const ok = await showConfirm('Import will replace activities and entries. Members and household stay. Continue?', 'Import');
+  const ok = await showConfirm('Import will replace activities and entries. Continue?', 'Import');
   if (!ok) { event.target.value = ''; return; }
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
       parseImport(e.target.result);
-      saveData();
+      saveLocalState();
       renderActivities();
       showMicroToast('Imported');
     } catch (err) {
@@ -1610,29 +1708,27 @@ function parseImport(text) {
   for (let line of lines) {
     line = line.trim();
     if (!line || line.startsWith('#')) continue;
-    if (line.startsWith('## ACTIVITIES') || line.startsWith('## AKTIVITAETEN')) { section = 'a'; continue; }
-    if (line.startsWith('## ENTRIES') || line.startsWith('## EINTRAEGE')) { section = 'e'; continue; }
+    if (line.startsWith('## ACTIVITIES')) { section = 'a'; continue; }
+    if (line.startsWith('## ENTRIES')) { section = 'e'; continue; }
     if (line.startsWith('## ')) { section = null; continue; }
-    if (line.startsWith('Emoji\t') || line.startsWith('Timestamp\t') || line.startsWith('Zeitstempel\t')) continue;
+    if (line.startsWith('Emoji\t') || line.startsWith('Timestamp\t')) continue;
 
     const parts = line.split('\t');
     if (section === 'a' && parts.length >= 3) {
       newActivities.push({ emoji: parts[0] || '·', name: parts[1], points: parseInt(parts[2]) || 0 });
     } else if (section === 'e' && parts.length >= 4) {
-      // Try to map userName back to a member; if no match, mark with a placeholder userId
       const userName = parts[1];
       const member = state.members.find(m => m.name === userName);
       newEntries.push({
         id: uid('e_'),
         timestamp: parts[0],
-        userId: member ? member.userId : 'u_imported',
+        userId: member ? member.userId : 'imported',
         userName: userName,
         activity: parts[2],
         points: parseInt(parts[3]) || 0,
       });
     }
   }
-
   if (newActivities.length) state.activities = newActivities;
   state.entries = newEntries;
 }
@@ -1641,15 +1737,30 @@ function parseImport(text) {
 // BOOT
 // =====================================================
 document.addEventListener('DOMContentLoaded', () => {
-  setupWelcomeHandlers();
-  loadData();
+  // Auth screen handlers
+  document.getElementById('authSubmit').addEventListener('click', handleSendMagicLink);
+  document.getElementById('authEmail').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSendMagicLink();
+  });
 
-  // Decide what to show first
-  if (state.household && state.currentUserId && getCurrentMember()) {
-    initApp();
-  } else {
-    showSetupScreen('welcome');
-  }
+  // Welcome screen handlers
+  document.getElementById('choiceCreate').addEventListener('click', () => showSetupScreen('create'));
+  document.getElementById('choiceJoin').addEventListener('click', () => {
+    // Pre-fill from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinCode = urlParams.get('join');
+    if (joinCode) document.getElementById('joinCode').value = joinCode;
+    showSetupScreen('join');
+  });
+  document.getElementById('welcomeSignOut').addEventListener('click', handleSignOut);
+
+  document.getElementById('createBack').addEventListener('click', () => showSetupScreen('welcome'));
+  document.getElementById('joinBack').addEventListener('click', () => showSetupScreen('welcome'));
+  document.getElementById('createSubmit').addEventListener('click', handleCreateHousehold);
+  document.getElementById('joinSubmit').addEventListener('click', handleJoinHousehold);
+
+  // Start
+  startApp();
 });
 </script>
 </body>
