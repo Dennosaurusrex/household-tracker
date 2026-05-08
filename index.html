@@ -864,8 +864,8 @@
 // =====================================================
 // !!! CONFIGURATION — REPLACE THESE TWO VALUES !!!
 // =====================================================
-const SUPABASE_URL = 'https://fcpdqawgpctazvjkzzcz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_6QbBUjrwpzKDq3G5Xcya8Q_ahCtIPhy';
+const SUPABASE_URL = 'HIER_DEINE_PROJECT_URL_EINTRAGEN';
+const SUPABASE_KEY = 'HIER_DEINEN_PUBLISHABLE_KEY_EINTRAGEN';
 // =====================================================
 
 const DEFAULT_ACTIVITIES = [
@@ -1206,7 +1206,7 @@ async function loadHouseholdFromSupabase() {
     const member = state.members.find(m => m.participantId === e.participant_id);
     return {
       id: e.id,
-      timestamp: e.logged_at,
+      timestamp: e.logged_at || new Date().toISOString(), // fallback for legacy null entries
       userId: member ? member.userId : null,
       userName: member ? member.name : 'Unknown',
       activity: e.activity_name,
@@ -1497,6 +1497,7 @@ async function recordActivity(activity, btnEl) {
         participant_id: state.myParticipantId,
         activity_name: activity.name,
         points: activity.points,
+        logged_at: new Date().toISOString(),
         created_by: authUser.id,
       })
       .select()
