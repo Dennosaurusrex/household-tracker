@@ -864,8 +864,8 @@
 // =====================================================
 // !!! CONFIGURATION — REPLACE THESE TWO VALUES !!!
 // =====================================================
-const SUPABASE_URL = 'https://fcpdqawgpctazvjkzzcz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_6QbBUjrwpzKDq3G5Xcya8Q_ahCtIPhy';
+const SUPABASE_URL = 'HIER_DEINE_PROJECT_URL_EINTRAGEN';
+const SUPABASE_KEY = 'HIER_DEINEN_PUBLISHABLE_KEY_EINTRAGEN';
 // =====================================================
 
 const DEFAULT_ACTIVITIES = [
@@ -1529,7 +1529,7 @@ async function recordActivity(activity, btnEl) {
 function renderEntries() {
   const list = document.getElementById('entryList');
   const myEntries = state.entries
-    .filter(e => e.userId === authUser.id)
+    .filter(e => e.participantId === state.myParticipantId)
     .slice(0, 50);
 
   if (myEntries.length === 0) {
@@ -1657,12 +1657,24 @@ function renderStats() {
   const start = getPeriodStart(state.currentPeriod);
   const filtered = state.entries.filter(e => new Date(e.timestamp) >= start);
 
-  const totals = {};
+  // Aggregate by participantId (guaranteed to exist on every entry)
+  // then resolve to display name from current members list.
+  const totalsByParticipant = {};
   filtered.forEach(e => {
-    const member = getMemberById(e.userId);
-    const displayName = member ? member.name : (e.userName || 'Unknown') + ' (removed)';
-    totals[displayName] = (totals[displayName] || 0) + e.points;
+    const pid = e.participantId;
+    if (!pid) return; // skip orphan entries
+    totalsByParticipant[pid] = (totalsByParticipant[pid] || 0) + (e.points || 0);
   });
+
+  // Build display name map: participantId -> name
+  const totals = {};
+  Object.entries(totalsByParticipant).forEach(([pid, pts]) => {
+    const member = state.members.find(m => m.participantId === pid);
+    const displayName = member ? member.name : 'Removed member';
+    // If multiple participantIds resolve to same display name (rare), sum them
+    totals[displayName] = (totals[displayName] || 0) + pts;
+  });
+  // Show all current members even with 0 points
   state.members.forEach(m => { if (!(m.name in totals)) totals[m.name] = 0; });
 
   const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
