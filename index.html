@@ -864,8 +864,8 @@
 // =====================================================
 // !!! CONFIGURATION — REPLACE THESE TWO VALUES !!!
 // =====================================================
-const SUPABASE_URL = 'https://fcpdqawgpctazvjkzzcz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_6QbBUjrwpzKDq3G5Xcya8Q_ahCtIPhy';
+const SUPABASE_URL = 'HIER_DEINE_PROJECT_URL_EINTRAGEN';
+const SUPABASE_KEY = 'HIER_DEINEN_PUBLISHABLE_KEY_EINTRAGEN';
 // =====================================================
 
 const DEFAULT_ACTIVITIES = [
@@ -958,8 +958,10 @@ function getMemberById(userId) {
 // LOCAL CACHE
 // =====================================================
 function saveCache() {
+  if (!authUser) return;
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({
+      cachedForUserId: authUser.id,
       household: state.household,
       members: state.members,
       activities: state.activities,
@@ -970,12 +972,22 @@ function saveCache() {
 }
 
 function loadCache() {
+  if (!authUser) return false;
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-    if (cached && cached.household) {
-      Object.assign(state, cached);
+    // Only use cache if it belongs to the currently signed-in user
+    if (cached && cached.household && cached.cachedForUserId === authUser.id) {
+      Object.assign(state, {
+        household: cached.household,
+        members: cached.members || [],
+        activities: cached.activities || [],
+        entries: cached.entries || [],
+        myParticipantId: cached.myParticipantId || null,
+      });
       return true;
     }
+    // Cache exists but for different user → wipe it
+    if (cached) localStorage.removeItem(CACHE_KEY);
   } catch {}
   return false;
 }
@@ -1092,11 +1104,15 @@ async function startApp() {
 
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session) {
+      // Skip if we already initialized for this user (avoid double-run)
+      const wasAlreadySignedIn = authUser && authUser.id === session.user.id;
       authUser = session.user;
       if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
         history.replaceState(null, '', window.location.pathname);
       }
-      afterAuth();
+      if (!wasAlreadySignedIn) {
+        afterAuth();
+      }
     } else if (event === 'SIGNED_OUT') {
       authUser = null;
       clearCache();
@@ -1108,10 +1124,7 @@ async function startApp() {
 async function afterAuth() {
   showSetupScreen('loading', 'Loading your household…');
 
-  // First show cached version if available, then refresh from server
-  const hasCache = loadCache();
-
-  // Try to load from Supabase
+  // Try to load from Supabase first (always primary source of truth)
   try {
     const loaded = await loadHouseholdFromSupabase();
     if (loaded) {
@@ -1119,10 +1132,13 @@ async function afterAuth() {
       initApp();
       return;
     }
+    // Loaded successfully but no household membership → user is new or has been removed
+    console.log('No household membership found for', authUser.email);
   } catch (e) {
-    console.error('Load failed:', e);
+    console.error('Load failed, trying cache fallback:', e);
+    // Network error / RLS issue → try cache as fallback
+    const hasCache = loadCache();
     if (hasCache) {
-      // Use cache as fallback
       setSyncStatus('offline', 'offline');
       initApp();
       showMicroToast('Offline — using cached data', true);
@@ -1130,7 +1146,9 @@ async function afterAuth() {
     }
   }
 
-  // No household yet → show welcome
+  // No household for this user → show welcome screen
+  // Wipe any stale cache from a different login on this device
+  localStorage.removeItem(CACHE_KEY);
   document.getElementById('welcomeUserEmail').textContent = `Signed in as ${authUser.email}`;
   showSetupScreen('welcome');
 }
