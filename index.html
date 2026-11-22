@@ -3,22 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#fafafa">
+<meta name="theme-color" content="#0c0c0c">
 <title>Household</title>
 <style>
   :root {
-    --bg: #fafafa;
-    --surface: #ffffff;
-    --ink: #111111;
-    --ink-2: #555555;
-    --muted: #999999;
-    --line: #e8e8e8;
-    --line-strong: #d4d4d4;
-    --accent: #2563eb;
-    --accent-soft: #eff6ff;
-    --success: #059669;
-    --warning: #d97706;
-    --danger: #dc2626;
+    color-scheme: dark;
+    --bg: #0c0c0c;
+    --surface: #171717;
+    --ink: #f5f5f5;
+    --on-ink: #111111;
+    --ink-2: #c8c8c8;
+    --muted: #8a8a8a;
+    --line: #2a2a2a;
+    --line-strong: #3d3d3d;
+    --accent: #60a5fa;
+    --accent-soft: #172033;
+    --accent-line: #1e3a5f;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --danger-soft: #3f1d1d;
+    --danger-line: #7f1d1d;
+    --danger-ink: #fecaca;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
@@ -95,7 +101,7 @@
   .user-badge .admin-tag {
     font-size: 9px;
     background: var(--ink);
-    color: white;
+    color: var(--on-ink);
     padding: 1px 5px;
     border-radius: 3px;
     text-transform: uppercase;
@@ -180,7 +186,7 @@
     left: 0;
     right: 0;
     background: var(--ink);
-    color: white;
+    color: var(--on-ink);
     padding: 10px 20px;
     font-size: 13px;
     font-weight: 500;
@@ -191,7 +197,7 @@
     pointer-events: none;
   }
   .micro-toast.show { transform: translateY(0); }
-  .micro-toast.error { background: var(--danger); }
+  .micro-toast.error { background: #991b1b; color: var(--danger-ink); }
 
   .entry-item {
     background: var(--surface);
@@ -227,7 +233,7 @@
   }
   .icon-btn:active { background: var(--bg); }
   .icon-btn.danger { color: var(--danger); }
-  .icon-btn.danger:active { background: #fef2f2; }
+  .icon-btn.danger:active { background: var(--danger-soft); }
 
   .period-tabs {
     display: flex;
@@ -250,7 +256,7 @@
     border-radius: 6px;
     transition: all 0.15s;
   }
-  .period-tab.active { background: var(--ink); color: white; }
+  .period-tab.active { background: var(--ink); color: var(--on-ink); }
   .stat-card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -318,7 +324,7 @@
   .form-input:focus, .form-select:focus { outline: none; border-color: var(--ink); }
   .btn {
     background: var(--ink);
-    color: white;
+    color: var(--on-ink);
     border: 1px solid var(--ink);
     border-radius: 10px;
     padding: 12px 20px;
@@ -449,11 +455,11 @@
     letter-spacing: 0.4px;
   }
   .member-role .you-tag { background: var(--accent-soft); color: var(--accent); }
-  .member-role .admin-role-tag { background: var(--ink); color: white; }
+  .member-role .admin-role-tag { background: var(--ink); color: var(--on-ink); }
 
   .invite-box {
     background: var(--accent-soft);
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--accent-line);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 14px;
@@ -496,7 +502,7 @@
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.65);
     z-index: 300;
     display: none;
     align-items: center;
@@ -595,7 +601,7 @@
 
   .auth-message {
     background: var(--accent-soft);
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--accent-line);
     color: var(--accent);
     padding: 14px;
     border-radius: 10px;
@@ -603,6 +609,11 @@
     line-height: 1.5;
     margin-top: 16px;
     max-width: 320px;
+  }
+  .auth-message.error {
+    background: var(--danger-soft);
+    border-color: var(--danger-line);
+    color: var(--danger-ink);
   }
   .loader {
     display: inline-block;
@@ -1377,7 +1388,7 @@ async function handleSendMagicLink() {
   const email = emailInput.value.trim();
 
   if (!email) {
-    messageEl.innerHTML = '<div class="auth-message" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">Please enter your email.</div>';
+    messageEl.innerHTML = '<div class="auth-message error">Please enter your email.</div>';
     return;
   }
 
@@ -1394,7 +1405,7 @@ async function handleSendMagicLink() {
   submitBtn.textContent = 'Send magic link';
 
   if (error) {
-    messageEl.innerHTML = `<div class="auth-message" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">${escapeHtml(error.message)}</div>`;
+    messageEl.innerHTML = `<div class="auth-message error">${escapeHtml(error.message)}</div>`;
     return;
   }
   messageEl.innerHTML = `
