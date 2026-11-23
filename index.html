@@ -736,7 +736,7 @@
 
   <section class="screen" id="screen-correct">
     <h2 class="screen-title">History</h2>
-    <p class="screen-subtitle">Edit or delete your entries.</p>
+    <p class="screen-subtitle">Everyone's activities, newest first. You can only change your own.</p>
     <div id="entryList"></div>
   </section>
 
@@ -1556,31 +1556,42 @@ async function recordActivity(activity, btnEl) {
 // =====================================================
 // HISTORY
 // =====================================================
+function isOwnEntry(entry) {
+  if (!entry) return false;
+  if (state.myParticipantId && entry.participantId === state.myParticipantId) return true;
+  if (authUser && entry.userId && entry.userId === authUser.id) return true;
+  return false;
+}
+
 function renderEntries() {
   const list = document.getElementById('entryList');
-  const myEntries = state.entries
-    .filter(e => e.participantId === state.myParticipantId)
-    .slice(0, 50);
+  const entries = state.entries
+    .slice()
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  if (myEntries.length === 0) {
+  if (entries.length === 0) {
     list.innerHTML = `<div class="empty"><div class="emoji">·</div><p>No entries yet.</p></div>`;
     return;
   }
 
   list.innerHTML = '';
-  myEntries.forEach(e => {
+  entries.forEach(e => {
+    const own = isOwnEntry(e);
     const item = document.createElement('div');
     item.className = 'entry-item';
+    const actions = own ? `
+      <div class="entry-actions">
+        <button class="icon-btn" data-action="edit" data-id="${escapeHtml(e.id)}" aria-label="Edit">✎</button>
+        <button class="icon-btn danger" data-action="delete" data-id="${escapeHtml(e.id)}" aria-label="Delete">×</button>
+      </div>
+    ` : '';
     item.innerHTML = `
       <div class="entry-info">
         <div class="entry-name">${escapeHtml(e.activity)}</div>
-        <div class="entry-meta">${formatDate(e.timestamp)}</div>
+        <div class="entry-meta">${escapeHtml(e.userName || 'Unknown')} · ${formatDate(e.timestamp)}</div>
       </div>
       <div class="entry-points">+${e.points}</div>
-      <div class="entry-actions">
-        <button class="icon-btn" data-action="edit" data-id="${e.id}" aria-label="Edit">✎</button>
-        <button class="icon-btn danger" data-action="delete" data-id="${e.id}" aria-label="Delete">×</button>
-      </div>
+      ${actions}
     `;
     list.appendChild(item);
   });
@@ -1595,6 +1606,9 @@ function renderEntries() {
 }
 
 async function deleteEntry(id) {
+  const entry = state.entries.find(e => e.id === id);
+  if (!isOwnEntry(entry)) return;
+
   const ok = await showConfirm('Really delete this entry?', 'Delete entry');
   if (!ok) return;
 
@@ -1614,13 +1628,15 @@ async function deleteEntry(id) {
 }
 
 function openEditModal(id) {
+  const entry = state.entries.find(e => e.id === id);
+  if (!isOwnEntry(entry)) return;
+
   state.editingEntryId = id;
   const select = document.getElementById('editActivity');
   select.innerHTML = state.activities.map(a =>
     `<option value="${escapeHtml(a.name)}">${escapeHtml(a.name)} (${a.points} pts)</option>`
   ).join('');
-  const entry = state.entries.find(e => e.id === id);
-  if (entry) select.value = entry.activity;
+  select.value = entry.activity;
   document.getElementById('editModal').classList.add('show');
 }
 
@@ -1635,6 +1651,9 @@ async function saveEdit() {
   if (!activity) return;
 
   const entryId = state.editingEntryId;
+  const existing = state.entries.find(e => e.id === entryId);
+  if (!isOwnEntry(existing)) return;
+
   setSyncStatus('syncing', 'saving');
   try {
     const { error } = await sb.from('entries')
